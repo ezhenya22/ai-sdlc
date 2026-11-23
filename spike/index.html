@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spike · two-screen realtime check</title>
+<style>
+:root{color-scheme:light dark;--ink:#001E60;--bg:#F3F8FD;--card:#fff;--blue:#0053E2;--line:#CFE0F3;--mut:#566894}
+@media(prefers-color-scheme:dark){:root{--ink:#fff;--bg:#00123F;--card:#001E60;--blue:#4DBDF5;--line:#1C3F8E;--mut:#9DB5E0}}
+body{font:16px/1.5 -apple-system,system-ui,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+main{max-width:560px;margin:0 auto;padding:20px}
+h1{font-size:20px;margin:0 0 4px}.mut{color:var(--mut);font-size:13px}
+form{display:flex;gap:8px;margin:16px 0}input{flex:1;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+button{font:inherit;font-weight:600;padding:10px 16px;border:0;border-radius:10px;background:var(--blue);color:#fff;cursor:pointer}
+#status{padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:14px}
+ul{list-style:none;padding:0;margin:12px 0}li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:6px 0}
+li b{font-variant-numeric:tabular-nums}.me{border-left:4px solid var(--blue)}
+</style></head><body><main>
+<h1>Two-screen realtime check</h1>
+<div class="mut">Throwaway risk spike (ADR-000). Open this page on two devices with the same room; a message sent on one should appear on the other within 2 seconds. Demo data only, deleted after the spike.</div>
+<form id="f"><input id="msg" maxlength="140" placeholder="Type anything" autocomplete="off" required><button>Send</button></form>
+<div id="status">Connecting…</div>
+<ul id="list"></ul>
+</main>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const URL_ = 'https://nmbvqcwzulhdktzhcpbf.supabase.co';
+const KEY = 'sb_publishable_UfFW1PUNAP7F2RMgCgWAVQ_J_V_KFEd';            // publishable key: public by design; row-level security protects the data
+const room = (new URLSearchParams(location.search).get('room') || 'demo').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,32) || 'demo';
+const sb = createClient(URL_, KEY);
+const $ = s => document.querySelector(s), status = t => $('#status').textContent = t;
+let me = null; const seen = new Set();
+function show(row){
+  if (seen.has(row.id)) return; seen.add(row.id);
+  const ms = Date.now() - new Date(row.sent_at).getTime();
+  const li = document.createElement('li'); if (row.author === me) li.className = 'me';
+  li.innerHTML = `<b></b> <span class="mut"></span>`;
+  li.querySelector('b').textContent = row.body;
+  li.querySelector('.mut').textContent = ` · ${row.author === me ? 'from this screen' : 'from the other screen'} · arrived ${ms} ms after send`;
+  $('#list').prepend(li);
+  window.__last = { body: row.body, ms, mine: row.author === me };
+}
+const { data: auth, error: aerr } = await sb.auth.signInAnonymously();
+if (aerr) { status('Sign-in failed: ' + aerr.message); throw aerr; }
+me = auth.user.id;
+const { data: rows } = await sb.from('spike_pings').select('*').eq('room', room).order('created_at', { ascending: false }).limit(10);
+(rows || []).reverse().forEach(show);
+sb.channel('room-' + room)
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'spike_pings', filter: `room=eq.${room}` }, p => show(p.new))
+  .subscribe(s => { status(s === 'SUBSCRIBED' ? `Live · room "${room}" · signed in as a guest` : 'Realtime: ' + s); window.__ready = s === 'SUBSCRIBED'; });
+$('#f').addEventListener('submit', async e => {
+  e.preventDefault(); const body = $('#msg').value.trim(); if (!body) return;
+  const { error } = await sb.from('spike_pings').insert({ room, body, sent_at: new Date().toISOString() });
+  if (error) status('Send failed: ' + error.message); else $('#msg').value = '';
+});
+</script></body></html>
