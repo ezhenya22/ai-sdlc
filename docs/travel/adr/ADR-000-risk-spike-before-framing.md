@@ -37,7 +37,7 @@ written on phone A appears on phone B within 2 seconds over cellular.
 
 ## Outcome (23 Nov 2026)
 - **Domain:** eugenetarasov.com resolves to GitHub Pages on Google's resolver and locally within minutes of the
-  GoDaddy change (four A records, `www` CNAME, TTL 30 min). HTTPS certificate: pending at time of writing.
+  GoDaddy change (four A records, `www` CNAME, TTL 30 min). HTTPS certificate issued after removing and re-adding the custom domain on GitHub (it had not started on its own); HTTPS enforced.
 - **Database + guests:** guest (anonymous) sign-in on, capped at 30 new guests per hour. The model API key is stored
   as a server-side project secret only.
 - **Access rules, tested by attack:** read without signing in → refused (42501); write without signing in → refused;
@@ -47,5 +47,9 @@ written on phone A appears on phone B within 2 seconds over cellular.
 - **Finding:** the very first run on the brand-new table delivered only 2 of 5. Later runs were 5 of 5. Treated as a
   cold start: the live demo gets a warm-up run beforehand, and the release checklist includes it.
 - **Finding:** headless Chrome can't hold the realtime connection (its clock is fast-forwarded), so the page itself was
-  checked in real browser windows. End-to-end tests of realtime will run in a real-time browser, not a virtual-time one.
+  checked in real browser windows. End-to-end tests of realtime will run in a real-time browser, not a virtual-time one.- **Exit check passed:** a phone on LTE and a laptop, both on the live site, exchanged messages in the same room; the
+  phone's own message came back through realtime in 0.9 s.
+- **Finding:** the room code was lost when the address was retyped on the phone, so the two screens sat in different
+  rooms and saw nothing. Consequence for the product: nobody types a room code. The QR code carries it, and every
+  screen shows the room name.
 
