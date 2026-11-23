@@ -1,0 +1,17 @@
+{
+ "schema": "review-doc/1",
+ "document": "docs/travel/00-brief.md",
+ "doc_type": "brief",
+ "version": "5",
+ "reviewed_on": "2026-11-23",
+ "status": "Rules pass",
+ "counts": {
+  "Fix": 0,
+  "Check": 0,
+  "Note": 0
+ },
+ "coverage": null,
+ "judgments": null,
+ "since_last_run": null,
+ "findings": []
+}

@@ -1,0 +1,36 @@
+{
+ "schema": "review-doc/1",
+ "document": "docs/travel/00-brief.md",
+ "doc_type": "brief",
+ "version": "5",
+ "reviewed_on": "2026-11-23",
+ "status": "Ready",
+ "counts": {
+  "Fix": 0,
+  "Check": 1,
+  "Note": 0
+ },
+ "coverage": null,
+ "judgments": {
+  "criteria": 6,
+  "answered": 6,
+  "missing": [],
+  "rejected": []
+ },
+ "since_last_run": {
+  "new": 1,
+  "resolved": 1
+ },
+ "findings": [
+  {
+   "id": "c8973647",
+   "rule": "J6",
+   "grade": "Check",
+   "where": "The riskiest assumption is visible",
+   "message": "Whether managers will decide in the app instead of replying by email is the assumption most likely to sink a request-and-approval tool, but it appears only under Risks, with no assumption id, owner or confirm-by date, so nobody is asked to answer it before the gate.",
+   "suggested": "| A-09 | Managers record their decision in the app instead of replying by email, so the app becomes the only record of a trip | The panel, asked by Eugene Tarasov in the walkthrough | 2026-12-04 |",
+   "quote": "If managers keep approving by email, there are two records again and the spreadsheet comes back.",
+   "source": "judgment"
+  }
+ ]
+}
