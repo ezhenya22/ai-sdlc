@@ -1,1 +1,20 @@
-[]
+[
+ {
+  "date": "2026-11-23",
+  "stage": "0 risk spike",
+  "skill": null,
+  "artifact": "spike/ + ADR-000",
+  "outcome": "live path proven: realtime 5/5 in 0.1-0.8 s (3 runs), 3 of 3 access-rule attacks refused",
+  "defects_found": 2,
+  "defects": [
+   "cold start: 2 of 5 delivered on first-ever run",
+   "headless virtual time breaks realtime check"
+  ],
+  "human_actions": [
+   "domain purchase",
+   "Supabase account+project",
+   "Anthropic key (rotated once after a chat paste)",
+   "DNS records"
+  ]
+ }
+]
