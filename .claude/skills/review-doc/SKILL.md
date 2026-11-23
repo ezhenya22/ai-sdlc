@@ -22,8 +22,9 @@ python3 .claude/skills/review-doc/tools/test_check_doc.py                       
 
 | File | Contents |
 |---|---|
-| `docs/<app>/reviews/<doc>.review.md` | Status (Ready / Needs work), counts, coverage, findings grouped Fix → Check → Note, each with location, quote and paste-ready suggestion |
-| `docs/<app>/reviews/<doc>.review.json` | The same, machine-readable (`schema: review-doc/1`), stable finding ids, `since_last_run` new/resolved |
+| `docs/<app>/reviews/<doc>.rules.md` / `.rules.json` | Rule checks only (step 1, or a maker's self-check). Status is `Rules pass` or `Needs work`, never `Ready`. Never touches the judged review |
+| `docs/<app>/reviews/<doc>.review.md` | Written only by a judged run (`--judgments`). Status (Ready / Needs work), counts, coverage, findings grouped Fix → Check → Note, each with location, quote and paste-ready suggestion |
+| `docs/<app>/reviews/<doc>.review.json` | The same, machine-readable (`schema: review-doc/1`), stable finding ids, `since_last_run` new/resolved against the previous judged review |
 
 ## The flow — do not reorder, do not skip
 
@@ -50,7 +51,8 @@ python3 .claude/skills/review-doc/tools/test_check_doc.py                       
 | A finding must be real | Quote verified against the document text; invented quotes are rejected |
 | Coverage is counted, not estimated | Requirements with a story, N of M, from the document's own ids |
 | Same document, same findings | Rule checks are deterministic; finding ids are stable hashes |
-| Progress is visible | `since_last_run`: findings new vs resolved since the previous review |
+| Progress is visible | `since_last_run`: findings new vs resolved since the previous judged review |
+| A self-check can't erase a review | Rule-only runs write `.rules.*`; only judged runs write `.review.*` (added 2026-11-23 after "the tool lost the previous review": a rule-only run wiped the v1 travel-brief review) |
 
 ## Honesty rules
 

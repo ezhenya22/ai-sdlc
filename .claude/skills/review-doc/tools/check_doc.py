@@ -290,25 +290,36 @@ def write_outputs(path, kind, head, F, stats, jstats, today):
     base = os.path.splitext(os.path.basename(path))[0]
     outdir = os.path.join(os.path.dirname(os.path.abspath(path)), 'reviews')
     os.makedirs(outdir, exist_ok=True)
-    jp, mp = os.path.join(outdir, base + '.review.json'), os.path.join(outdir, base + '.review.md')
-    prev = {}
-    if os.path.exists(jp):
+    # A rule-only run writes <doc>.rules.*; only a judged run writes <doc>.review.*. So a maker's self-check can never
+    # overwrite a judged review, and "since last run" always compares judged review to judged review.
+    # (corrections.jsonl, 2026-11-23: a rule-only run wiped the v1 travel-brief review.)
+    kind_out = 'review' if jstats else 'rules'
+    jp, mp = os.path.join(outdir, f'{base}.{kind_out}.json'), os.path.join(outdir, f'{base}.{kind_out}.md')
+    prev_p = os.path.join(outdir, base + '.review.json')
+    prev, had_prev = {}, bool(jstats) and os.path.exists(prev_p)
+    if had_prev:
         try:
-            prev = {f['id']: f for f in json.load(open(jp, encoding='utf-8'))['findings']}
+            prev = {f['id']: f for f in json.load(open(prev_p, encoding='utf-8'))['findings']}
         except Exception:
             prev = {}
     cur = {f['id'] for f in F.items}
     counts = {g: sum(1 for f in F.items if f['grade'] == g) for g in ('Fix', 'Check', 'Note')}
-    status = 'Ready' if counts['Fix'] == 0 and not (jstats and jstats['missing']) else 'Needs work'
+    # Ready needs every judgment criterion answered, so a rule-only run can at best say "Rules pass".
+    if counts['Fix']:
+        status = 'Needs work'
+    elif not jstats:
+        status = 'Rules pass'
+    else:
+        status = 'Needs work' if jstats['missing'] else 'Ready'
     out = {'schema': 'review-doc/1', 'document': os.path.relpath(path, repo_root(path)), 'doc_type': kind,
            'version': head.get('version'), 'reviewed_on': today.isoformat(), 'status': status, 'counts': counts,
            'coverage': stats, 'judgments': jstats,
-           'since_last_run': {'new': len(cur - set(prev)), 'resolved': len(set(prev) - cur)} if prev else None,
+           'since_last_run': {'new': len(cur - set(prev)), 'resolved': len(set(prev) - cur)} if had_prev else None,
            'findings': F.items}
     tmp = jp + '.tmp'
     json.dump(out, open(tmp, 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
     os.replace(tmp, jp)
-    L = [f'# Review: {out["document"]} (v{head.get("version")})', '',
+    L = [f'# {"Review" if jstats else "Rule checks"}: {out["document"]} (v{head.get("version")})', '',
          f'**Status: {status}** · Fix {counts["Fix"]} · Check {counts["Check"]} · Note {counts["Note"]} · reviewed {today}', '']
     if stats:
         L.append(f'Coverage: {stats.get("covered")} of {stats.get("requirements")} requirements have a story · {stats.get("stories")} stories.')
@@ -319,7 +330,7 @@ def write_outputs(path, kind, head, F, stats, jstats, today):
         for r in jstats['rejected']:
             L.append(f'- ⛔ rejected judgment — {r}')
     else:
-        L.append('Judgment criteria: not run yet (rule checks only).')
+        L.append('Judgment criteria: not run (rule checks only). This file never says Ready; the judged review is <doc>.review.md.')
     if out['since_last_run']:
         L.append(f'Since last run: {out["since_last_run"]["new"]} new, {out["since_last_run"]["resolved"]} resolved.')
     L.append('')
@@ -373,7 +384,7 @@ def main():
               + (f' · coverage {stats["covered"]} of {stats["requirements"]}' if stats else '')
               + (f' · judgments {jstats["answered"]}/{jstats["criteria"]}, rejected {len(jstats["rejected"])}' if jstats else ' · judgments not run'))
         print(f'→ {os.path.relpath(mp)}')
-    sys.exit(0 if out['status'] == 'Ready' else 1)
+    sys.exit(0 if out['status'] in ('Ready', 'Rules pass') else 1)
 
 
 if __name__ == '__main__':

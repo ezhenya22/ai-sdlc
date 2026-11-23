@@ -10,10 +10,13 @@ CHECK = os.path.join(HERE, 'check_doc.py')
 TODAY = '2026-11-23'
 
 
+def out_path(doc, kind):
+    return os.path.join(os.path.dirname(doc), 'reviews', os.path.splitext(os.path.basename(doc))[0] + f'.{kind}.json')
+
+
 def run(doc, *extra):
     p = subprocess.run([sys.executable, CHECK, doc, '--today', TODAY, '--quiet', *extra], capture_output=True, text=True)
-    out = os.path.join(os.path.dirname(doc), 'reviews', os.path.splitext(os.path.basename(doc))[0] + '.review.json')
-    return p.returncode, json.load(open(out)), p.stderr
+    return p.returncode, json.load(open(out_path(doc, 'review' if '--judgments' in extra else 'rules'))), p.stderr
 
 
 def main():
@@ -70,6 +73,20 @@ def main():
     lines.append(f'{"PASS" if jok else "FAIL"}  judgment merge        kept {sorted(kept)} · rejected {len(js["rejected"])} (made-up quote, unknown id) · unanswered {js["missing"]}')
     if not jok:
         failures.append(f'judgment merge: kept {kept}, rejected {js["rejected"]}, missing {js["missing"]}')
+    # a rule-only run never says Ready and never touches the judged review; since-last-run compares judged runs
+    pb = os.path.join(tmp, 'perfect/00-brief.md')
+    jp = os.path.join(tmp, 'pass.json')
+    json.dump([{'id': f'J{i}', 'verdict': 'pass'} for i in range(1, 7)], open(jp, 'w'))
+    _, r1, _ = run(pb, '--judgments', jp)
+    before = open(out_path(pb, 'review')).read()
+    _, rr, _ = run(pb)
+    untouched = open(out_path(pb, 'review')).read() == before
+    _, r2, _ = run(pb, '--judgments', jp)
+    hok = (r1['status'] == 'Ready' and rr['status'] == 'Rules pass' and untouched
+           and r1['since_last_run'] is None and r2['since_last_run'] == {'new': 0, 'resolved': 0})
+    lines.append(f'{"PASS" if hok else "FAIL"}  review history        judged {r1["status"]} · rule-only {rr["status"]}, review file untouched {untouched} · since last run {r2["since_last_run"]}')
+    if not hok:
+        failures.append(f'review history: judged {r1["status"]}, rule-only {rr["status"]}, untouched {untouched}, since {r2["since_last_run"]}')
     print('\n'.join(lines))
     shutil.rmtree(tmp)
     if failures:

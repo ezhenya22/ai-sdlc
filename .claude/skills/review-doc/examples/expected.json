@@ -1,7 +1,7 @@
 {
- "_comment": "Rule ids the checker must report (at least once) for each fixture, with --today 2026-11-23. Perfect fixtures must have zero Fix findings.",
- "perfect/00-brief.md": {"fix": [], "status": "Ready"},
- "perfect/01-prd.md": {"fix": [], "status": "Ready", "coverage": "3 of 3"},
+ "_comment": "Rule ids the checker must report (at least once) for each fixture, with --today 2026-11-23. Perfect fixtures must have zero Fix findings. Rule-only runs say \"Rules pass\", never \"Ready\".",
+ "perfect/00-brief.md": {"fix": [], "status": "Rules pass"},
+ "perfect/01-prd.md": {"fix": [], "status": "Rules pass", "coverage": "3 of 3"},
  "broken/00-brief.md": {"fix": ["C02", "C03", "C04", "B02", "B03"], "check": ["B04"], "status": "Needs work"},
  "broken/01-prd.md": {"fix": ["P01", "P02", "P03", "P04", "P05", "P08"], "check": ["P06", "P07"], "status": "Needs work", "coverage": "1 of 3"}
 }

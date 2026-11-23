@@ -5,7 +5,7 @@
 |---|---|---|
 | `docs/<app>/<doc>.md` | read | The document under review (header + sections) |
 | `reference/rubric_<doc_type>.md` | read | Judgment criteria (`### Jn · title`) |
-| `docs/<app>/reviews/` | write | `<doc>.review.json` and `.review.md` (overwritten each run; previous json used for "since last run") |
+| `docs/<app>/reviews/` | write | `<doc>.rules.*` on a rule-only run; `<doc>.review.json` and `.review.md` only on a judged run (the previous judged json is the base for "since last run") |
 | the brief named in a PRD header | read | Must exist and be `status: approved` |
 
 ## 2. Point it at a new app
